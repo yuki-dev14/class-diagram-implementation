@@ -1,9 +1,9 @@
 #include <iostream>
 #include <iomanip>
-
+#include <string>
 using namespace std;
 
-// product class
+// Product class
 class Product {
 public:
     string id;
@@ -20,10 +20,10 @@ public:
     }
 };
 
-// shoppingcart class
+// ShoppingCart class
 class ShoppingCart {
 public:
-    struct CartItem {
+    struct CartItem {  
         Product product;
         int quantity;
     };
@@ -34,7 +34,11 @@ private:
 
 public:
     ShoppingCart() : cart(nullptr), cartSize(0) {}
-    ~ShoppingCart() { delete[] cart; }
+
+    ~ShoppingCart() { 
+        delete[] cart; 
+        cart = nullptr;
+    }
 
     void addProduct(const Product& product) {
         for (int i = 0; i < cartSize; i++) {
@@ -44,11 +48,13 @@ public:
                 return;
             }
         }
+
         CartItem* newCart = new CartItem[cartSize + 1];
         for (int i = 0; i < cartSize; i++) {
             newCart[i] = cart[i];
         }
         newCart[cartSize] = {product, 1};
+
         delete[] cart;
         cart = newCart;
         cartSize++;
@@ -73,27 +79,31 @@ public:
     bool isEmpty() const { return cartSize == 0; }
     CartItem* getCartItems() { return cart; }
     int getCartSize() const { return cartSize; }
-    void clearCart() { delete[] cart; cart = nullptr; cartSize = 0; }
+
+    void clearCart() { 
+        delete[] cart; 
+        cart = nullptr;
+        cartSize = 0; 
+    }
 };
 
-// order class
+
+// Order class
 class Order {
 private:
     static int orderCounter;
     int orderId;
     double totalAmount;
-    ShoppingCart::CartItem* orderDetails;
+    ShoppingCart::CartItem orderDetails[20];
     int orderSize;
 
 public:
-    Order() : orderId(0), totalAmount(0), orderDetails(nullptr), orderSize(0) {}
-    ~Order() { delete[] orderDetails; }
+    Order() : orderId(0), totalAmount(0), orderSize(0) {}
 
     void createOrder(ShoppingCart::CartItem* cartItems, int cartSize) {
         orderId = ++orderCounter;
         totalAmount = 0;
         orderSize = cartSize;
-        orderDetails = new ShoppingCart::CartItem[cartSize];
         for (int i = 0; i < cartSize; i++) {
             orderDetails[i] = cartItems[i];
             totalAmount += cartItems[i].product.price * cartItems[i].quantity;
@@ -101,7 +111,7 @@ public:
     }
 
     void displayOrder() const {
-        cout << "\nOrder ID: " << orderId << "\nTotal Amount: Php: " << totalAmount << endl;
+        cout << "\nOrder ID: " << orderId << "\nTotal Amount: Php " << totalAmount << endl;
         cout << "Order Details:\n";
         cout << "Product ID      Name           Price     Quantity\n";
         cout << "------------------------------------------------\n";
@@ -116,47 +126,42 @@ public:
 
 int Order::orderCounter = 0;
 
-// input validation func
+// Input validation
 string getValidatedStringInput() {
     string input;
-    while (!(cin >> input)) {
-        cout << "Invalid input! Please enter a valid string: ";
-        cin.clear();
-        cin.ignore(1000, '\n');
-    }
+    cin.ignore();
+    getline(cin, input);
     return input;
 }
 
 char getYesOrNo() {
     char choice;
-    do {
+    while (true) {
+        cout << "Enter 'Y' or 'N': ";
         cin >> choice;
         choice = toupper(choice);
-        if (choice == 'Y' || choice == 'N') {
-            return choice;
-        }
-        cout << "Invalid input! Please enter 'Y' or 'N': ";
-        cin.clear();
-        cin.ignore(1000, '\n');
-    } while (choice != 'Y' && choice != 'N'); 
-
-    return choice;
-}
-
-int getValidIntegerInput() {
-    int number;
-    while (!(cin >> number)) {
-        cout << "Invalid input! Please enter a valid number: ";
+        if (choice == 'Y' || choice == 'N') return choice;
+        cout << "Invalid input! Please enter 'Y' or 'N'.\n";
         cin.clear();
         cin.ignore(1000, '\n');
     }
-    return number;
 }
 
-// main func
-int main() {
+int getValidIntegerInput(int min, int max) {
+    int number;
+    while (true) {
+        if (cin >> number && number >= min && number <= max) {
+            return number;
+        }
+        cout << "Invalid input! Please enter a number between " << min << " and " << max << ": ";
+        cin.clear();
+        cin.ignore(1000, '\n');
+    }
+}
 
-//list ng products 
+// Main function
+int main() {
+    //list ng products
     Product productList[] = {
         {"ABC", "Paper", 50.00},
         {"CDE", "Pencil", 15.00},
@@ -167,7 +172,7 @@ int main() {
     };
     int productListSize = 6;
     ShoppingCart cart;
-    Order* orders = nullptr;
+    Order orders[10];
     int orderCount = 0;
     int choice;
     bool continueRunning = true;
@@ -175,7 +180,7 @@ int main() {
     while (continueRunning) {
         cout << "\n===== Store Menu =====\n";
         cout << "1. View Products\n2. View Shopping Cart\n3. View Orders\n4. Exit\nEnter your choice: ";
-        choice = getValidIntegerInput();
+        choice = getValidIntegerInput(1, 4);
 
         switch (choice) {
             case 1:
@@ -196,14 +201,10 @@ int main() {
                 break;
             case 2:
                 cart.viewCart();
-                if (!cart.isEmpty()) {
+                if (!cart.isEmpty() && orderCount < 10) {
                     cout << "\nDo you want to check out? (Y/N): ";
                     if (getYesOrNo() == 'Y') {
-                        Order* newOrders = new Order[orderCount + 1];
-                        for (int i = 0; i < orderCount; i++) newOrders[i] = orders[i];
-                        newOrders[orderCount].createOrder(cart.getCartItems(), cart.getCartSize());
-                        delete[] orders;
-                        orders = newOrders;
+                        orders[orderCount].createOrder(cart.getCartItems(), cart.getCartSize());
                         cout << "Checked out successfully!\n";
                         orderCount++;
                         cart.clearCart();
@@ -211,16 +212,13 @@ int main() {
                 }
                 break;
             case 3:
-                for (int i = 0; i < orderCount; i++) orders[i].displayOrder();
+                if (orderCount == 0) cout << "No orders placed yet.\n";
+                else for (int i = 0; i < orderCount; i++) orders[i].displayOrder();
                 break;
             case 4:
-                cout << "Exiting. Thank you!\n";
                 continueRunning = false;
                 break;
-            default:
-                cout << "Invalid choice!\n";
         }
     }
-    delete[] orders;
     return 0;
 }
