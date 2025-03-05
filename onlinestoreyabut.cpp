@@ -127,41 +127,37 @@ public:
 int Order::orderCounter = 0;
 
 // Input validation
-string getValidatedStringInput() {
-    string input;
-    cin.ignore();
-    getline(cin, input);
-    return input;
-}
-
 char getYesOrNo() {
     char choice;
-    while (true) {
-        cout << "Enter 'Y' or 'N': ";
-        cin >> choice;
-        choice = toupper(choice);
-        if (choice == 'Y' || choice == 'N') return choice;
-        cout << "Invalid input! Please enter 'Y' or 'N'.\n";
+    cout << "Enter 'Y' or 'N': ";
+    cin >> choice;
+    choice = toupper(choice);
+    
+    while (choice != 'Y' && choice != 'N') {
+        cout << "Invalid input! Please enter 'Y' or 'N': ";
         cin.clear();
         cin.ignore(1000, '\n');
+        cin >> choice;
+        choice = toupper(choice);
     }
+    return choice;
 }
 
 int getValidIntegerInput(int min, int max) {
     int number;
-    while (true) {
-        if (cin >> number && number >= min && number <= max) {
-            return number;
-        }
+    cout << "Enter a number between " << min << " and " << max << ": ";
+    
+    while (!(cin >> number) || number < min || number > max) {
         cout << "Invalid input! Please enter a number between " << min << " and " << max << ": ";
         cin.clear();
         cin.ignore(1000, '\n');
     }
+    return number;
 }
 
 // Main function
 int main() {
-    //list ng products
+    //List ng products
     Product productList[] = {
         {"ABC", "Paper", 50.00},
         {"CDE", "Pencil", 15.00},
@@ -185,9 +181,10 @@ int main() {
         switch (choice) {
             case 1:
                 for (int i = 0; i < productListSize; i++) productList[i].display();
-                cout << "\nEnter the ID of the product you want to add to the cart: ";
-                {
-                    string productId = getValidatedStringInput();
+                do {
+                    cout << "\nEnter the ID of the product you want to add to the cart: ";
+                    string productId;
+                    cin >> productId;
                     bool found = false;
                     for (int i = 0; i < productListSize; i++) {
                         if (productList[i].id == productId) {
@@ -197,7 +194,8 @@ int main() {
                         }
                     }
                     if (!found) cout << "Invalid Product ID!\n";
-                }
+                    cout << "\nDo you want to add another product? (Y/N): ";
+                } while (getYesOrNo() == 'Y');
                 break;
             case 2:
                 cart.viewCart();
